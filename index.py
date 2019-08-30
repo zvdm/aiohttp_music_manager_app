@@ -36,10 +36,33 @@ class Login(web.View):
 
     async def post(self):
         data = await self.request.post()
-        login = data['login']
-        pwd = data['password']
-        if login == 'user' and pwd == '1234':
-            return web.Response(text="You have logged in")
+        conn = await asyncpg.connect('postgresql://mmapp@localhost/mmappdb', password='mmapp1234')
+        if data.get('api_key', None) is not None:
+            api_key = data.get('api_key')
+            try:
+                row = await conn.fetchrow('SELECT name FROM Users WHERE api_key=$1', api_key)
+                if row:
+                    await conn.close()
+                    return web.Response(text=f"You have logged in as {row}!")
+            except Exception as e:
+                print(e)
+                pass
+        if data.get('username', None) is not None:
+            new_user = data.get('username')
+            date_time = datetime.datetime.now()
+            row = await conn.execute('INSERT INTO Users'
+                                     '(name, api_key, created_date, active_status)'
+                                     'VALUES ($1,$2,$3,$4) '
+                                     'ON CONFLICT (name) DO NOTHING',
+                                     new_user, uuid.uuid4(), date_time, True)
+            if int(row.split()[2]):
+                await conn.close()
+                return web.HTTPPermanentRedirect('/login', body='This user exists')
+            row = await conn.fetchrow('SELECT name,api_key FROM Users WHERE name=$1', new_user)
+            print(row[0], row[1])
+            await conn.close()
+            return web.Response(text=f"You have logged in as {new_user}!")
+        await conn.close()
         raise web.HTTPFound('/login')
 
 
@@ -74,7 +97,7 @@ async def main():
             id SERIAL PRIMARY KEY, 
             name TEXT UNIQUE, 
             api_key UUID UNIQUE, 
-            create_date TIMESTAMP,
+            created_date TIMESTAMP,
             active_status BOOL
         );
         
@@ -97,3 +120,4 @@ async def main():
 
 asyncio.get_event_loop().run_until_complete(main())
 web.run_app(app)
+connection = asyncpg.connect('postgresql://mmapp@localhost/mmappdb', password='mmapp1234')

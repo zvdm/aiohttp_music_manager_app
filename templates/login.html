@@ -7,7 +7,7 @@
 {% block content %}
 
     {% if error %}
-        <p>Your username and password didn't match. Please, try again.</p>
+        <p>This username is reserved yet. Please, input another one.</p>
     {% endif %}
 
     {% if next %}
@@ -17,23 +17,31 @@
             <p>Please. login to see this page.</p>
         {% endif %}
     {% endif %}
-
+    <h2>Please login or sign up</h2><br>
+    <h4>Login form</h4>
     <form method="post" action="/login" enctype="application/x-www-form-urlencoded">
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-    <table>
-
-        <tr>
-            <td><label for="login">Login</label></td>
-            <td><input id="login" name="login" type="text" value="" autofocus/></td>
-        </tr>
-        <tr>
-            <td><label for="password">Password</label></td>
-            <td><input id="password" name="password" type="password" value=""/></td>
-        </tr>
-
-    </table>
-    <input type="submit" value="login">
-    <input type="hidden" name="next" value="{{ next }}">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <table>
+            <tr>
+                <td><label for="api_key">API key</label></td>
+                <td><input id="api_key" name="api_key" type="text" value="" autofocus/></td>
+            </tr>
+        </table>
+        <input type="submit" value="login">
+        <input type="hidden" name="next" value="{{ next }}">
+    </form>
+    <br><br>
+    <h4>Sign up form</h4>
+    <form method="post" action="/login" enctype="application/x-www-form-urlencoded">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <table>
+            <tr>
+                <td><label for="username">Name</label></td>
+                <td><input id="username" name="username" type="text" value="" autofocus/></td>
+            </tr>
+        </table>
+        <input type="submit" value="sign up">
+        <input type="hidden" name="next" value="{{ next }}">
     </form>
 
 {% endblock %}
