@@ -1,33 +1,24 @@
-import sys
 import asyncpgsa
 import jinja2
 import aiohttp_jinja2
-from cryptography import fernet
 from aiohttp import web
-from aiohttp_session import setup, get_session, session_middleware
-from aiohttp_session.cookie_storage import EncryptedCookieStorage
-from aiohttp_security import authorized_userid
 
-# from mmapp.settings import config
-from mmapp.views import routes
-
-
-# async def current_user_ctx_processor(request):
-#     userid = await authorized_userid(request)
-#     is_anonymous = not bool(userid)
-#     return {'current_user': {'is_anonymous': is_anonymous}}
+from .routes import setup_static_routes
+from .views import routes
+from .middlewares import check_api_key
 
 
 async def init_app(config):
-    app = web.Application()
+    app = web.Application(middlewares=[check_api_key])
 
     app['config'] = config
 
     aiohttp_jinja2.setup(app, loader=jinja2.PackageLoader('mmapp', 'templates'))
 
-    app['static_root_url'] = 'static'
-
     app.add_routes(routes)
+
+    # setup_routes(app)
+    setup_static_routes(app)
 
     app.on_startup.append(on_start)
     app.on_cleanup.append(on_close)
@@ -38,7 +29,6 @@ async def init_app(config):
 async def create_app(config: dict):
     app = await init_app(config)
     return app
-    # connection = asyncpg.connect('postgresql://mmapp:mmapp1234@localhost/mmappdb', password='mmapp1234')
 
 
 async def on_start(app):
