@@ -8,15 +8,15 @@ from .db import get_user_by_api_key, user_login, user_signup
 @web.middleware
 async def check_api_key(request, handler):
     class SignUp(web.View):
-        async def get(self):
-            return aiohttp_jinja2.render_template('signup.html', self, {'url': self.path})
+        async def get(self, msg=None):
+            return aiohttp_jinja2.render_template('signup.html', self, {'url': self.path, 'error': msg})
 
         async def post(self):
             data = await self.post()
             # Login existed user and return api_key as cookie
             if data.get('login', None) is not None \
                     and data.get('login', None) != '' \
-                    and data.get('password', None) is not None\
+                    and data.get('password', None) is not None \
                     and data.get('password', None) != '':
                 try:
                     async with self.app['db'].acquire() as conn:
@@ -32,7 +32,7 @@ async def check_api_key(request, handler):
             # Sign up new user and return api_key as cookie
             if data.get('username', None) is not None \
                     and data.get('username', None) != '' \
-                    and data.get('new_password', None) is not None\
+                    and data.get('new_password', None) is not None \
                     and data.get('new_password', None) != '':
                 print(data.get('new_password') == '')
                 date_time = datetime.datetime.now()
@@ -49,21 +49,34 @@ async def check_api_key(request, handler):
             e = 'Perhaps some field is not filled'
             return aiohttp_jinja2.render_template('signup.html', self, {'error': e, 'url': request.path})
 
-    if request.headers.get('Cookie', None) is None or request.headers.get('Cookie').split('=')[0] != 'api_key':
-        # No one cookie
-        print('No one cookie or api_key, go to signup')
+    # Retrieve cookie
+    cookie = request.headers.get('Cookie', None)
+    msg = ''
+    # Check is cookie contains api_key
+    if cookie is not None and 'api_key' in cookie:
+        api_key = cookie.split('=')
+        user = await get_user_by_api_key(request, api_key[1])
+        # Check active_status of user
+        try:
+            if not user['active_status']:
+                msg = 'Your api_key is for deleted or not existed user.'
+        except:
+            return web.Response(text='Error, perhaps, your cookie contains not existed api_key.')
+
+    if cookie is None or 'api_key' not in cookie or msg != '':
+        # No one cookie or not api_key or user's status is inactive
         if request.method == 'GET':
             print('GET', request.method)
-            response = await SignUp.get(request)
+            response = await SignUp.get(request, msg)
         else:
             print('POST', request.method)
             response = await SignUp.post(request)
         print('Middleware login/signup is success', response)
         return response
-    api_key = request.headers.get('Cookie').split('=')
+    api_key = cookie.split('=')
     print('req_key', api_key[1])
-    if api_key[0] == 'api_key' and await get_user_by_api_key(request, api_key[1]):
-        # If cookie is in headers, check api_key
+    if msg == '' and user:
+        # If cookie is in headers, user in db and user's status is active
         response = await handler(request)
         return response
     print('Unexpected error')

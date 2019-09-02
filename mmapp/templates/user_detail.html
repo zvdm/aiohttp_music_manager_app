@@ -11,6 +11,12 @@
         <button id="send_button" type="submit" hidden>Send new info</button>
         <button id="cancel" type="button" hidden>cancel</button>
     </form>
+    <br><br>
+
+    <form method="post" action="/user" enctype="application/x-www-form-urlencoded">
+        <input style="background:white; color:black; border: 0" name="delete" type="text" value="delete user" hidden>
+        <button type="submit">Delete user</button>
+    </form>
 
     <div style="margin-left:20px; margin-top:20px">
         <h4>Albums</h4>
@@ -27,7 +33,7 @@
         <h4>Tracks</h4>
         {% if user.tracks %}
             {% for track in user.tracks %}
-                <a href="/album/{{ album.id }}">{{ track.title }}</a>
+                <a href="/track/{{ track.title }}">{{ track.title }}</a><br>
             {% endfor %}
         {% else %}
             <p>There are no one track.</p>

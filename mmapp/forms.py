@@ -1,4 +1,6 @@
-from .db import get_user_by_name, update_user_info
+import os
+
+from .db import get_user_by_name, update_user_info, get_user_by_api_key, update_track_item
 
 
 async def validate_user_form(request, form):
@@ -13,7 +15,14 @@ async def validate_user_form(request, form):
     if form.get('password') is not None:
         update_data['pwd'] = form.get('password')
     update_data['email'] = form.get('email')
-    update_data['age'] = form.get('age')
+
+    # Check if retrieved value of age is digits
+    try:
+        age = int(form.get('age'))
+    except:
+        age = 0
+    update_data['age'] = age
+
     update_data['location'] = form.get('location')
 
     print(update_data)
@@ -24,20 +33,18 @@ async def validate_user_form(request, form):
     return 0
 
 
+async def validate_track_form(request, new_title, old_title, upload_path):
+    # Get user by api_key to retrieve user id
+    user = await get_user_by_api_key(request, request.cookies['api_key'])
 
+    # Define new filename in uploads dir
+    filename_for_dir = f'{user["id"]}-{new_title}'
+    new_saved_dir = os.path.join(upload_path, filename_for_dir)
 
-    # if not username:
-    #     return 'username is required'
-    # if not password:
-    #     return 'password is required'
-    #
-    # user = await db.get_user_by_name(conn, username)
-    #
-    # if not user:
-    #     return 'Invalid username'
-    # if not check_password_hash(password, user['password_hash']):
-    #     return 'Invalid password'
-    # else:
-    #     return None
-    #
-    # return 'error'
+    # Update data about track in db
+    row = await update_track_item(request, new_title, old_title, new_saved_dir, user['id'])
+
+    # Rename track file in uploads dir
+    os.rename(os.path.join(upload_path, f'{user["id"]}-{old_title}'), new_saved_dir)
+    print('row', row)
+    return row
