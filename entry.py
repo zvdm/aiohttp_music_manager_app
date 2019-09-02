@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import os
 from aiohttp import web
 from mmapp import create_app
 from mmapp.db import create_db
@@ -33,4 +34,4 @@ if args.reload:
 
 
 if __name__ == '__main__':
-    web.run_app(app, host=args.host, port=args.port)
+    web.run_app(app, port=os.getenv('PORT', 5000))
