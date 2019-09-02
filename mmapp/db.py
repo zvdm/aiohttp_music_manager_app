@@ -164,7 +164,7 @@ async def get_user_tracks_by_album_id_and_api_key(request, album_id, user_id, in
 
 async def get_track_item(request, title, user_id):
     async with request.app['db'].acquire() as conn:
-        row = await conn.fetchrow('SELECT id, title, album_id FROM Tracks WHERE title=$1 AND user_id=$2', title, user_id)
+        row = await conn.fetchrow('SELECT id, title, album_id, saved_dir FROM Tracks WHERE title=$1 AND user_id=$2', title, user_id)
         return row
 
 
@@ -184,7 +184,8 @@ async def update_add_track_item_to_album(request, album_id, list_of_track, user_
 
 async def delete_track(request, id, user_id):
     async with request.app['db'].acquire() as conn:
-        row = await conn.execute('DELETE FROM Tracks WHERE id=$1 AND user_id=$2', id, user_id)
+        row = await conn.fetchrow('SELECT id, saved_dir FROM Tracks WHERE id=$1 AND user_id=$2', id, user_id)
+        await conn.execute('DELETE FROM Tracks WHERE id=$1 AND user_id=$2', id, user_id)
         return row
 
 

@@ -74,7 +74,7 @@ async def check_api_key(request, handler):
         print('Middleware login/signup is success', response)
         return response
     api_key = cookie.split('=')
-    print('req_key', api_key[1])
+    # print('req_key', api_key[1])
     if msg == '' and user:
         # If cookie is in headers, user in db and user's status is active
         response = await handler(request)

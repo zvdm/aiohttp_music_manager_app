@@ -1,16 +1,15 @@
 import argparse
 import asyncio
-import os
 from aiohttp import web
 from mmapp import create_app
 from mmapp.db import create_db
 from mmapp.settings import get_config
 
-# try:
-#     import uvloop
-#     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-# except ImportError:
-#     print('Error while import uvloop')
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    print('Error while import uvloop')
 
 
 parser = argparse.ArgumentParser(description='Music Manager Application')
@@ -34,4 +33,4 @@ if args.reload:
 
 
 if __name__ == '__main__':
-    web.run_app(app, port=os.getenv('PORT', 5000))
+    web.run_app(app, host=args.host, port=args.port)

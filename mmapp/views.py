@@ -164,6 +164,8 @@ class Tracks(web.View):
         if 'delete' in data:
             user = await get_user_by_api_key(self.request, self.request.cookies['api_key'])
             result = await delete_track(self.request, int(data['delete']), user['id'])
+            print(result)
+            os.remove(result[1])
             print('DELETE TRACK', result)
             return web.HTTPSeeOther('/tracks')
 
