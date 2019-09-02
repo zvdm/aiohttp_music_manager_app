@@ -3,10 +3,10 @@
 {% block content %}
     <form method="post" action="/user" enctype="application/x-www-form-urlencoded">
         <h2>User: <input style="background:white; color:black; border: 0" id="username" name="name" type="text" value="{{ user.info.name }}" disabled required></h2>
-        <h6>New password: <input style="background:white; color:black; border: 0" id="password" name="pwd" type="text" placeholder="input new password" disabled hidden></h6>
-        <h6>email: <input style="background:white; color:black; border: 0" id="email" name="email" type="email" value="{% if user.info.email %}{{ user.info.email }}{% endif %}" disabled></h6>
-        <h6>Age: <input style="background:white; color:black; border: 0" id="age" name="age" type="text" value="{% if user.info.age %}{{ user.info.age }}{% endif %}" disabled></h6>
-        <h6>Location: <input style="background:white; color:black; border: 0" id="location" name="location" type="text" value="{% if user.info.location %}{{ user.info.location }}{% endif %}" disabled></h6>
+        <h6 style="font-size:18px">New password: <input style="background:white; color:black; border: 0" id="password" name="pwd" type="text" placeholder="input new password" disabled hidden></h6>
+        <h6 style="font-size:18px">email: <input style="background:white; color:black; border: 0" id="email" name="email" type="email" value="{% if user.info.email %}{{ user.info.email }}{% endif %}" disabled></h6>
+        <h6 style="font-size:18px">Age: <input style="background:white; color:black; border: 0" id="age" name="age" type="text" value="{% if user.info.age %}{{ user.info.age }}{% endif %}" disabled></h6>
+        <h6 style="font-size:18px">Location: <input style="background:white; color:black; border: 0" id="location" name="location" type="text" value="{% if user.info.location %}{{ user.info.location }}{% endif %}" disabled></h6>
         <button id="change_button" type="button" >Change info</button>
         <button id="send_button" type="submit" hidden>Send new info</button>
         <button id="cancel" type="button" hidden>cancel</button>

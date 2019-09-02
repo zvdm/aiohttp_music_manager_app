@@ -10,13 +10,11 @@
     </form>
 
     <br><br>
-    <h6><u>This track contains in next albums:</u></h6>
     <div style="margin-left:20px; margin-top:20px">
         {% if albums %}
-            {% for track in tracks %}
-                <a href="/album/{{ album.title }}">{{ album.title }}</a>
-                <br>
-            {% endfor %}
+
+            <p style="font-size:20px">This track contains in next albums: <a href="/album/{{ albums.title }}">{{ albums.title }}</a></p>
+
         {% else %}
             <p>There are no one albums, which contain this track.</p>
         {% endif %}

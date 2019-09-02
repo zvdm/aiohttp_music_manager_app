@@ -4,8 +4,7 @@ import aiohttp_jinja2
 from aiohttp import web
 from pathlib import Path
 
-from .db import get_user_by_api_key, get_user_albums_by_api_key, get_user_tracks_by_api_key, delete_user, \
-    create_track, delete_track, get_track_item, get_user_albums_by_id_and_api_key
+from .db import *
 from .forms import validate_user_form, validate_track_form
 
 routes = web.RouteTableDef()
@@ -61,21 +60,88 @@ class Albums(web.View):
         api_key = self.request.cookies['api_key']
         # Get user by api_key from request cookie
         user = await get_user_by_api_key(self.request, api_key)
+        # Get user's albums by user's id
+        albums = await get_user_albums_by_api_key(self.request, user[0])
         # Get user's tracks by user's id
         tracks = await get_user_tracks_by_api_key(self.request, user[0])
         return {
             'user': user[1],
-            'albums': tracks,
+            'albums': albums,
+            'tracks': tracks
         }
 
     async def post(self):
         data = await self.request.post()
-        # Check if marker is delete track
+        user = await get_user_by_api_key(self.request, self.request.cookies['api_key'])
+
+        # Check if marker is delete album
         if 'delete' in data:
-            user = await get_user_by_api_key(self.request, self.request.cookies['api_key'])
-            result = await delete_track(self.request, int(data['delete']), user['id'])
-            print('DELETE TRACK', result)
-            return web.HTTPSeeOther('/tracks')
+            # Get all tracks id by album id
+            result_tr = await delete_tracks_by_album_id(self.request, int(data['delete']), user['id'])
+            result_alb = await delete_album(self.request, int(data['delete']), user['id'])
+            print('DELETE ALBUM', result_alb)
+            print('DELETE TRACKS', result_tr)
+            return web.HTTPSeeOther('/albums')
+
+        # Create new album
+        title = data['title']
+        list_of_tracks = list(data.values())
+        del(list_of_tracks[0])
+        # Create new album in db
+        row_alb = await create_album(self.request, title, datetime.datetime.now(), user['id'])
+        # Add album id (foreign key) to appropriate tracks
+        await update_add_track_item_to_album(self.request, row_alb[0], list_of_tracks, user['id'])
+
+        return web.HTTPSeeOther('/albums')
+
+
+@routes.view(r'/album/{title:\w+}')
+class AlbumItem(web.View):
+    @aiohttp_jinja2.template('album_item_detail.html')
+    async def get(self):
+        api_key = self.request.cookies['api_key']
+        # Get track name from url
+        title = self.request.match_info['title']
+        # Get user by api_key from request cookie
+        user = await get_user_by_api_key(self.request, api_key)
+        # Check that this track exists in db
+        album = await get_user_album_by_title_and_api_key(self.request, title, user['id'])
+        # Get all tracks included in album
+        tracks_in_album = await get_user_tracks_by_album_id_and_api_key(self.request, album['id'], user['id'], 'in')
+        # Get all another tracks
+        tracks_not_in_album = await get_user_tracks_by_album_id_and_api_key(self.request, album['id'], user['id'], 'out')
+
+        print(tracks_in_album)
+        print(tracks_not_in_album)
+
+        return {
+            'title': album['title'],
+            'tracks_in_album': tracks_in_album,
+            'tracks_not_in_album': tracks_not_in_album
+        }
+
+    async def post(self):
+        data = await self.request.post()
+        print(data)
+        # Get user by api_key from request cookie
+        user = await get_user_by_api_key(self.request, self.request.cookies['api_key'])
+        old_title = self.request.match_info['title']
+
+        if 'delete' in data:
+            result = await delete_track_from_album(self.request, int(data['delete']), user['id'])
+            print('DELETE TRACK FROM ALBUM', result)
+            return web.HTTPSeeOther(f'/album/{self.request.match_info["title"]}')
+        if 'checked' in data:
+            list_of_tracks = list(data.values())
+            print(list_of_tracks)
+            # Add album id (foreign key) to appropriate tracks
+            row = await get_user_album_by_title_and_api_key(self.request, old_title, user['id'])
+            await update_add_track_item_to_album(self.request, row[0], list_of_tracks, user['id'])
+            return web.HTTPSeeOther(f'/album/{self.request.match_info["title"]}')
+
+        # Update album title
+        row = await update_album_name(self.request, data['title'], old_title, user['id'])
+        return web.HTTPSeeOther(f'/album/{data["title"]}')
 
 
 @routes.view('/tracks')
@@ -113,9 +179,8 @@ class TrackItem(web.View):
         user = await get_user_by_api_key(self.request, api_key)
         # Check that this track exists in db
         track = await get_track_item(self.request, title, user['id'])
-        albums = await get_user_albums_by_id_and_api_key(self.request, track['album_id'], user['id'])
+        albums = await get_user_album_by_id_and_api_key(self.request, track['album_id'], user['id'])
         return {
-            'user': user[1],
             'title': track['title'],
             'albums': albums
         }
@@ -126,7 +191,6 @@ class TrackItem(web.View):
 
         # Update track title
         row = await validate_track_form(self.request, data['title'], old_title, upload_path)
-        # print(result)
         return web.HTTPSeeOther(f'/track/{data["title"]}')
 
 
@@ -153,7 +217,7 @@ async def track_upload(request):
 
     date_time = datetime.datetime.now()
     result = await create_track(request, filename, date_time, saved_dir, user[0])
-    return web.HTTPSeeOther('/track')
+    return web.HTTPSeeOther('/tracks')
 
 # @routes.get(r'/{not_found:\d+}')
 # async def not_found(request):

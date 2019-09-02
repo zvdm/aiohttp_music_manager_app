@@ -39,6 +39,7 @@ async def create_db():
     await conn.close()
 
 
+# USERS SECTION
 async def user_signup(conn, new_user, clear_pwd, date_time, active_status):
     pwd = hashlib.sha256((clear_pwd + salt).encode()).hexdigest()
     row = await conn.execute('INSERT INTO Users'
@@ -94,18 +95,49 @@ async def delete_user(request):
         return row
 
 
+# ALBUMS SECTION
+async def create_album(request, title, date_time, user_id):
+    async with request.app['db'].acquire() as conn:
+        await conn.execute('INSERT INTO Albums'
+                           '(title, created_date, user_id)'
+                           'VALUES ($1,$2,$3)',
+                           title, date_time, user_id)
+        row = await conn.fetchrow('SELECT id, title FROM Albums WHERE title=$1 AND user_id=$2', title, user_id)
+        return row
+
+
 async def get_user_albums_by_api_key(request, user_id):
     async with request.app['db'].acquire() as conn:
         row = await conn.fetch('SELECT id, title FROM Albums WHERE user_id=$1', user_id)
         return row
 
 
-async def get_user_albums_by_id_and_api_key(request, id, user_id):
+async def get_user_album_by_id_and_api_key(request, id, user_id):
     async with request.app['db'].acquire() as conn:
-        row = await conn.fetch('SELECT id, title FROM Albums WHERE id=$1 AND user_id=$2', id, user_id)
+        row = await conn.fetchrow('SELECT id, title FROM Albums WHERE id=$1 AND user_id=$2', id, user_id)
         return row
 
 
+async def get_user_album_by_title_and_api_key(request, title, user_id):
+    async with request.app['db'].acquire() as conn:
+        row = await conn.fetchrow('SELECT id, title FROM Albums WHERE title=$1 AND user_id=$2', title, user_id)
+        return row
+
+
+async def update_album_name(request, new_title, old_title, user_id):
+    async with request.app['db'].acquire() as conn:
+        row = await conn.fetchrow('UPDATE Albums SET title=$1 WHERE title=$2 AND user_id=$3',
+                                  new_title, old_title, user_id)
+        return row
+
+
+async def delete_album(request, id, user_id):
+    async with request.app['db'].acquire() as conn:
+        row = await conn.execute('DELETE FROM Albums WHERE id=$1 AND user_id=$2', id, user_id)
+        return row
+
+
+# TRACKS SECTION
 async def create_track(request, filename, date_time, saved_dir, user_id):
     async with request.app['db'].acquire() as conn:
         row = await conn.execute('INSERT INTO Tracks'
@@ -118,6 +150,15 @@ async def create_track(request, filename, date_time, saved_dir, user_id):
 async def get_user_tracks_by_api_key(request, user_id):
     async with request.app['db'].acquire() as conn:
         row = await conn.fetch('SELECT id, title FROM Tracks WHERE user_id=$1', user_id)
+        return row
+
+
+async def get_user_tracks_by_album_id_and_api_key(request, album_id, user_id, in_out):
+    async with request.app['db'].acquire() as conn:
+        if in_out == 'in':
+            row = await conn.fetch('SELECT id, title FROM Tracks WHERE album_id=$1 AND user_id=$2', album_id, user_id)
+        else:
+            row = await conn.fetch('SELECT id, title FROM Tracks WHERE album_id IS DISTINCT FROM $1 AND user_id=$2', album_id, user_id)
         return row
 
 
@@ -134,10 +175,30 @@ async def update_track_item(request, new_title, old_title, new_saved_dir, user_i
         return row
 
 
+async def update_add_track_item_to_album(request, album_id, list_of_track, user_id):
+    async with request.app['db'].acquire() as conn:
+        for track in list_of_track:
+            await conn.fetchrow('UPDATE Tracks SET album_id=$1 WHERE title=$2 AND user_id=$3',
+                                album_id, track, user_id)
+
+
 async def delete_track(request, id, user_id):
     async with request.app['db'].acquire() as conn:
         row = await conn.execute('DELETE FROM Tracks WHERE id=$1 AND user_id=$2', id, user_id)
         return row
+
+
+async def delete_tracks_by_album_id(request, album_id, user_id):
+    async with request.app['db'].acquire() as conn:
+        row = await conn.execute('DELETE FROM Tracks WHERE album_id=$1 AND user_id=$2', album_id, user_id)
+        return row
+
+
+async def delete_track_from_album(request, id, user_id):
+    async with request.app['db'].acquire() as conn:
+        row = await conn.execute('UPDATE Tracks SET album_id=NULL WHERE id=$1 AND user_id=$2', id, user_id)
+        return row
+
 
 # from sqlalchemy import (get_user_tracks_by_api_key
 #     MetaData, Table, Column, ForeignKey,
