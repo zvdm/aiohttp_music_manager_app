@@ -5,11 +5,11 @@ from mmapp import create_app
 from mmapp.db import create_db
 from mmapp.settings import get_config
 
-try:
-    import uvloop
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-except ImportError:
-    print('Error while import uvloop')
+# try:
+#     import uvloop
+#     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+# except ImportError:
+#     print('Error while import uvloop')
 
 
 parser = argparse.ArgumentParser(description='Music Manager Application')
