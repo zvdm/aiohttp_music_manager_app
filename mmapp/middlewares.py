@@ -49,9 +49,9 @@ async def check_api_key(request, handler):
             e = 'Perhaps some field is not filled'
             return aiohttp_jinja2.render_template('signup.html', self, {'error': e, 'url': request.path})
 
-    if request.headers.get('Cookie', None) is None:
+    if request.headers.get('Cookie', None) is None or request.headers.get('Cookie').split('=')[0] != 'api_key':
         # No one cookie
-        print('No one cookie, go to signup')
+        print('No one cookie or api_key, go to signup')
         if request.method == 'GET':
             print('GET', request.method)
             response = await SignUp.get(request)

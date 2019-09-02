@@ -2,7 +2,6 @@ import asyncpg
 import hashlib
 import uuid
 
-
 salt = '3D4M'
 
 
@@ -32,6 +31,7 @@ async def create_db():
             id SERIAL PRIMARY KEY,
             title TEXT NOT NULL,
             created_date TIMESTAMP NOT NULL,
+            url TEXT,
             album_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL
         );
@@ -71,13 +71,20 @@ async def get_user_by_name(request, name):
 
 
 async def update_user_info(request, info, api_key):
+    count = 0
+    if 'name' in info:
+        async with request.app['db'].acquire() as conn:
+            row = await conn.execute('UPDATE Users SET name=$1 WHERE api_key=$2', info['name'], api_key)
+            count += int(row.split(' ')[1])
     if 'pwd' in info:
         info['pwd'] = hashlib.sha256((info['pwd'] + salt).encode()).hexdigest()
+        async with request.app['db'].aquire() as conn:
+            row = await conn.execute('UPDATE Users SET pwd=$1 WHERE api_key=$2', info['pwd'], api_key)
+            count += int(row.split(' ')[1])
     async with request.app['db'].acquire() as conn:
-        row = ''
-        for k, v in info.items():
-            row += await conn.execute('UPDATE Users SET name=$1 WHERE api_key=$2', v, api_key)
-        return row
+        row = await conn.execute('UPDATE Users SET email=$1, age=$2, location=$3 WHERE api_key=$4', info['email'], int(info['age']), info['location'], api_key)
+        count += int(row.split(' ')[1])
+        return f'UPDATE {count}'
 
 
 async def get_user_albums_by_api_key(request, api_key):
@@ -90,9 +97,6 @@ async def get_user_tracks_by_api_key(request, api_key):
     async with request.app['db'].acquire() as conn:
         row = await conn.fetchrow('SELECT id, title FROM Tracks WHERE user_id=$1', api_key)
         return row
-
-
-
 
 # from sqlalchemy import (get_user_tracks_by_api_key
 #     MetaData, Table, Column, ForeignKey,
@@ -131,6 +135,7 @@ async def get_user_tracks_by_api_key(request, api_key):
 #     Column('id', Integer, primary_key=True),
 #     Column('name', String(100), nullable=False),
 #     Column('created_date', DateTime, nullable=False),
+#     Column('url', String(200)),
 #     Column('album_id', Integer, ForeignKey('albums.id', ondelete='CASCADE'))
 #     Column('user_id', Integer, ForeignKey('albums.id', ondelete='CASCADE'))
 # )
