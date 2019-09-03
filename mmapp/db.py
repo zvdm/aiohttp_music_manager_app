@@ -162,6 +162,12 @@ async def get_user_tracks_by_album_id_and_api_key(request, album_id, user_id, in
         return row
 
 
+async def get_user_track_by_title_and_api_key(request, title, user_id):
+    async with request.app['db'].acquire() as conn:
+        row = await conn.fetchrow('SELECT id, title FROM Tracks WHERE title=$1 AND user_id=$2', title, user_id)
+        return row
+
+
 async def get_track_item(request, title, user_id):
     async with request.app['db'].acquire() as conn:
         row = await conn.fetchrow('SELECT id, title, album_id, saved_dir FROM Tracks WHERE title=$1 AND user_id=$2', title, user_id)

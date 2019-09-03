@@ -8,6 +8,7 @@ from .views import routes
 from .middlewares import check_api_key
 
 
+# async def init_app(config):
 async def init_app(config):
     app = web.Application(middlewares=[check_api_key])
 
@@ -25,7 +26,9 @@ async def init_app(config):
     return app
 
 
-async def create_app(config: dict):
+# async def create_app(config: dict):
+async def create_app(config):
+    # app = await init_app(config)
     app = await init_app(config)
     return app
 

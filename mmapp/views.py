@@ -205,8 +205,14 @@ async def track_upload(request):
     if not filename.endswith('.mp3'):
         return web.HTTPSeeOther('/track')
 
-    size = 0
     user = await get_user_by_api_key(request, request.cookies['api_key'])
+
+    # Check if file with this title exists
+    row = await get_user_track_by_title_and_api_key(request, filename, user['id'])
+    if row:
+        return web.HTTPSeeOther('/tracks')
+
+    size = 0
     filename_for_dir = f'{user["id"]}-{filename}'
     saved_dir = os.path.join(upload_path, filename_for_dir)
     with open(saved_dir, 'wb') as f:
@@ -220,7 +226,3 @@ async def track_upload(request):
     date_time = datetime.datetime.now()
     result = await create_track(request, filename, date_time, saved_dir, user[0])
     return web.HTTPSeeOther('/tracks')
-
-# @routes.get(r'/{not_found:\d+}')
-# async def not_found(request):
-#     raise web.HTTPFound('/')

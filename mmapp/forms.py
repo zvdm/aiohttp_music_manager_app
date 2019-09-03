@@ -1,6 +1,7 @@
 import os
+from aiohttp import web
 
-from .db import get_user_by_name, update_user_info, get_user_by_api_key, update_track_item
+from .db import get_user_by_name, update_user_info, get_user_by_api_key, update_track_item, get_user_track_by_title_and_api_key
 
 
 async def validate_user_form(request, form):
@@ -40,6 +41,11 @@ async def validate_track_form(request, new_title, old_title, upload_path):
     # Define new filename in uploads dir
     filename_for_dir = f'{user["id"]}-{new_title}'
     new_saved_dir = os.path.join(upload_path, filename_for_dir)
+
+    # Check if file with this title exists
+    row = await get_user_track_by_title_and_api_key(request, new_title, user['id'])
+    if row:
+        return web.HTTPSeeOther(f'/track/{old_title}')
 
     # Update data about track in db
     row = await update_track_item(request, new_title, old_title, new_saved_dir, user['id'])
