@@ -17,7 +17,6 @@ async def init_app(config):
 
     app.add_routes(routes)
 
-    # setup_routes(app)
     setup_static_routes(app)
 
     app.on_startup.append(on_start)
