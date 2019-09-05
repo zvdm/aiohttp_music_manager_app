@@ -22,7 +22,7 @@
         <h4>Albums</h4>
         {% if user.albums %}
             {% for album in user.albums %}
-                <a href="/album/{{ album.id }}">{{ album.title }}</a>
+                <a href="/album/{{ album.title }}">{{ album.title }}</a>
             {% endfor %}
         {% else %}
             <p>There are no one album.</p>
