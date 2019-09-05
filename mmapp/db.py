@@ -197,7 +197,8 @@ async def delete_track(request, id, user_id):
 
 async def delete_tracks_by_album_id(request, album_id, user_id):
     async with request.app['db'].acquire() as conn:
-        row = await conn.execute('DELETE FROM Tracks WHERE album_id=$1 AND user_id=$2', album_id, user_id)
+        row = await conn.fetch('SELECT id, saved_dir FROM Tracks WHERE album_id=$1 AND user_id=$2', album_id, user_id)
+        await conn.execute('DELETE FROM Tracks WHERE album_id=$1 AND user_id=$2', album_id, user_id)
         return row
 
 

@@ -79,6 +79,8 @@ class Albums(web.View):
             # Get all tracks id by album id
             result_tr = await delete_tracks_by_album_id(self.request, int(data['delete']), user['id'])
             result_alb = await delete_album(self.request, int(data['delete']), user['id'])
+            for track in result_tr:
+                os.remove(track[1])
             print('DELETE ALBUM', result_alb)
             print('DELETE TRACKS', result_tr)
             return web.HTTPSeeOther('/albums')
