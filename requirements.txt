@@ -10,7 +10,7 @@ asyncpgsa==0.26.0
 attrs==19.1.0
 cffi==1.12.3
 chardet==3.0.4
-cryptography==41.0.6
+cryptography==42.0.0
 fernet==1.0.1
 gunicorn==19.9.0
 idna==2.8
